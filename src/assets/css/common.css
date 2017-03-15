@@ -1,0 +1,25 @@
+.alertContainer{
+    position:fixed;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    max-width:60%;
+    padding:15px;
+    border-radius: 8px;
+    background:rgba(0,0,0,.7);
+    color:#fff;
+    font-size:14px;
+    z-index:999;
+}
+
+.fl{
+    float:left;
+}
+.fr{
+    float:right;
+}
+.clearfix:after{
+    content:'';
+    display: table;
+    clear:both;
+}
