@@ -20,7 +20,7 @@
         bottom 0
         background #fff
         color #000
-        z-index 999
+        z-index 7
         .loading-icon
             position absolute
             left 50%

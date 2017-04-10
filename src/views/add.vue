@@ -1,7 +1,7 @@
 <template>
     <div id="add">
         <na-head :title='opration'></na-head>
-        <div class="add-main">
+        <div class="add-container">
             <div class="row">
                 <span>分 类</span>
                 <input type="radio" name='type' value="share" v-model='tab' id="share"><label for="share">分享</label>
@@ -41,17 +41,10 @@
                 return this.$store.state.userInfo
             },
             opration () {
-                if (this.isUpdate()) {
+                if (this.topicId !== '') {
                     return '更新'
                 } else {
                     return '发布'
-                }
-            },
-            oprationBtn () {
-                if (this.isUpdate()) {
-                    return 'update'
-                } else {
-                    return 'add'
                 }
             }
         },
@@ -114,13 +107,6 @@
                 } else {
                     this.add()
                 }
-            },
-            isUpdate () {
-                if (this.topicId !== '') {
-                    return true
-                } else {
-                    return false
-                }
             }
         },
         components: {
@@ -131,8 +117,8 @@
 </script>
 
 <style lang='stylus'>
-    .add-main
-        padding 46px 2% 0px
+    .add-container
+        padding 46px 3% 0px
         .row
             padding 15px 0
             span
@@ -144,22 +130,22 @@
                 vertical-align middle
                 margin -3px 2px 0 10px
             input[type='text']
-                border 1px solid #eee
-                padding 8px 10px
-                border-radius 5px
                 width 70%
+                padding 8px 10px
+                border 1px solid #eee
+                border-radius 5px
                 &:focus
                     border 1px solid #1dd388
             &.textarea
                 span
                     vertical-align middle
                 textarea
-                    vertical-align middle
                     width 70%
                     height 100px
                     padding 8px 10px
                     border 1px solid #eee
                     border-radius 5px
+                    vertical-align middle
                     &:focus
                         border 1px solid #1dd388
     .btn

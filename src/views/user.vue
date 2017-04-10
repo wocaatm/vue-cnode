@@ -2,13 +2,13 @@
     <div id="user" v-if='userInfo.loginname'>
         <div class="user-top">
             <div class="rotate-container" @click='rotate' ref='rotateC'>
-                <div class="user-top-avatar">
+                <div class="rotata-avatar">
                     <img :src="userInfo.avatar_url" alt="" width="100%" height='100%'>
                 </div>
-                <div class="user-top-info" v-if='rotateFlag'>积分: {{userInfo.score}}</div>
+                <div class="rotate-info" v-if='rotateFlag'>积分: {{userInfo.score}}</div>
             </div>
-            <div class="user-other-info">
-                <span class="user-other-info-name">用户名: {{userInfo.loginname}}</span>
+            <div class="user-info-container">
+                <span>用户名: {{userInfo.loginname}}</span>
                 <span>创建日期: {{ userInfo.create_at | getTime }}</span>
             </div>
             <div class="collect" @click='showCollectMethod'><i class="fa fa-heart fa-2x"></i></div>
@@ -17,21 +17,21 @@
             <span class="item" @click='tabControl=0' :class="{active: !tabControl}">发布的主题</span>
             <span class="item" @click='tabControl=1' :class="{active: tabControl}">参与的主题</span>
         </div>
-        <div class="user-tab-content">
-            <div v-if='!tabControl' :class="{'topics-container':isSelf}">
-                <router-link :to="{name:'add'}" class='add-topics' v-if='isSelf'><i class="fa fa-plus fa-lg"></i></router-link>
+        <div class="topic-container" ref='topicContainer'>
+            <div v-if='!tabControl' :class="{'topics-container':isLoginUser}">
+                <router-link :to="{name:'add'}" class='add-topic' v-if='isLoginUser'><i class="fa fa-plus fa-lg"></i></router-link>
                 <ul v-if='userInfo.recent_topics.length'>
                     <li v-for='topic in userInfo.recent_topics'>
-                        <router-link :to="{name:'detail',params:{id:topic.id}}" class='reply'>
-                            <div class="reply-info">
+                        <router-link :to="{name:'detail',params:{id:topic.id}}" class='topic-info-container'>
+                            <div class="topic-info">
                                 <div class="avatar">
                                     <img :src="topic.author.avatar_url" alt="" width='64px' height='64px'>
                                 </div>
-                                <div class="other-info">
-                                    <div class="title-name">{{topic.title}}</div>
-                                    <div class="author-time">
+                                <div class="topic-main-info">
+                                    <div class="topic-title topic-style">{{topic.title}}</div>
+                                    <div class="author-time topic-style">
                                         <span>{{topic.author.loginname}}</span>
-                                        <span class="edit" v-if='isSelf'>
+                                        <span class="topic-edit" v-if='isLoginUser'>
                                             <router-link :to="{name:'add',params:{topicId:topic.id}}">
                                                 <i class="fa fa-edit fa-lg"></i>
                                             </router-link>
@@ -43,7 +43,7 @@
                         </router-link>
                     </li>
                 </ul>
-                <div v-else class="no-data">
+                <div v-else class="no-topics-data">
                     <i class="fa fa-file-text-o fa-2x"></i>
                     <span>暂无数据</span>
                 </div>
@@ -51,36 +51,38 @@
             <div v-if='tabControl'>
                 <ul v-if='userInfo.recent_replies.length'>
                     <li v-for='reply in userInfo.recent_replies'>
-                        <router-link :to="{name:'detail',params:{id:reply.id}}" class='reply'>
-                            <div class="reply-info">
+                        <router-link :to="{name:'detail',params:{id:reply.id}}" class='topic-info-container'>
+                            <div class="topic-info">
                                 <div class="avatar">
                                     <img :src="reply.author.avatar_url" alt="" width='64px' height='64px'>
                                 </div>
-                                <div class="other-info">
-                                    <div class="title-name">{{reply.title}}</div>
-                                    <div class="author-time">
+                                <div class="topic-main-info">
+                                    <div class="topic-title topic-style">{{reply.title}}</div>
+                                    <div class="author-time topic-style">
                                         <span>{{reply.author.loginname}}</span>
-                                        <span>{{reply.last_reply_at | getTime}}</span>
+                                        <span>最新回复:{{reply.last_reply_at | getTime}}</span>
                                     </div>
                                 </div>
                             </div>
                         </router-link>
                     </li>
                 </ul>
-                <div v-else class="no-data">
+                <div v-else class="no-topics-data">
                     <i class="fa fa-comment-o fa-2x"></i>
                     <span>暂无数据</span>
                 </div>
             </div>
         </div>
         <na-menu></na-menu>
-        <na-collect v-if='showCollect' :loginname='userName' :accesstoken="isSelf?userInfoSelf.token:''" @closeCollect='hideCollectMethod'></na-collect>
+        <na-collect v-if='showCollect' :loginname='userName' :accesstoken="isLoginUser?userInfoSelf.token:''" @closeCollect='hideCollectMethod'></na-collect>
     </div>
 </template>
 
 <script>
     import naMenu from '../components/menu'
     import naCollect from '../components/collect'
+    import Hammer from 'hammerjs'
+
     export default {
         data () {
             return {
@@ -88,7 +90,7 @@
                 userInfo: {},
                 rotateFlag: false,
                 tabControl: 0,
-                isSelf: false,
+                isLoginUser: false,
                 showCollect: false
             }
         },
@@ -97,14 +99,17 @@
                 return this.$store.state.userInfo
             }
         },
-        created () {
+        mounted () {
             this.userName = this.$route.params.username
             if (this.userName === this.userInfoSelf.loginname) {
-                this.isSelf = true
+                this.isLoginUser = true
             }
             this.$http.get(`https://cnodejs.org/api/v1/user/${this.userName}`).then(res => {
                 if (res.body.success) {
                     this.userInfo = res.body.data
+                    this.$nextTick(() => {
+                        this.bindOpration()
+                    })
                 } else {
                     this.$alert('获取用户信息失败', 1000)
                 }
@@ -122,11 +127,23 @@
             },
             showCollectMethod () {
                 this.showCollect = true
-                document.getElementsByClassName('user-tab-content')[0].classList.add('no-scroll')
+                this.$refs.topicContainer.classList.add('no-scroll')
             },
             hideCollectMethod () {
                 this.showCollect = false
-                document.getElementsByClassName('user-tab-content')[0].classList.remove('no-scroll')
+                this.$refs.topicContainer.classList.remove('no-scroll')
+            },
+            bindOpration () {
+                setTimeout(this.rotate.bind(this), 2000)
+                let hammer = new Hammer(this.$refs.topicContainer)
+                hammer.on('swipeleft', () => {
+                    if (this.tabControl) return
+                    this.tabControl = !this.tabControl
+                })
+                hammer.on('swiperight', () => {
+                    if (!this.tabControl) return
+                    this.tabControl = !this.tabControl
+                })
             }
         },
         components: {
@@ -140,52 +157,52 @@
     avatar-radius = 140px 
     tab-line-height = calc(8vh - 3px)
     .user-top
-        height 40vh
-        box-sizing border-box
-        background #666
         position relative
+        box-sizing border-box
+        height 40vh
+        background #666
         .rotate-container
             position absolute
             top 50%
             left 50%
+            overflow hidden
             width avatar-radius
             height avatar-radius
             margin-left - (@width / 2)
             margin-top - (@height / 2)
             border-radius (avatar-radius / 2)
-            overflow hidden
             perspective 600px
             transform-style preserve-3d
             transition transform 0.6s
             &.rotateY
                 transform rotateY(180deg)
-            .user-top-avatar
-                height 100%
-                width 100%
+            .rotata-avatar
                 position absolute
-                line-height 0
-            .user-top-info
                 height 100%
                 width 100%
+                line-height 0
+            .rotate-info
                 position absolute
                 z-index 1
-                background rgba(0,0,0,0.7)
-                color #fff
                 display flex
                 flex-wrap wrap
                 justify-content center
                 align-items center
+                height 100%
+                width 100%
+                color #fff
+                background rgba(0,0,0,0.7)
                 transform rotateY(180deg)
-        .user-other-info
+        .user-info-container
             position absolute
             bottom 0
             left 0
             right 0
-            line-height 40px
             display flex
             justify-content space-between
-            font-size 14px
             padding 0 15px
+            font-size 14px
+            line-height 40px
             color #fff
         .collect
             position absolute
@@ -193,59 +210,60 @@
             right 30px
             color red
     .user-tab
-        line-height tab-line-height
         display flex
         justify-content space-around
+        line-height tab-line-height
         .item
-            text-align center
             flex 1
             color #000
+            text-align center
             border 1px solid #eee
             &:first-child
                 border-right none
             &.active
                 border-bottom 2px solid #1dd388
-    .user-tab-content
-        height 52vh
-        overflow scroll
+    .topic-container
         position relative
+        overflow scroll
+        height 52vh
         &.no-scroll
             overflow hidden
         .topics-container
             padding-top 50px
-        .add-topics
+        .add-topic
             position fixed
             top 48vh
             left 0
             right 0
+            z-index 10
+            border-bottom 1px solid #eee
             line-height 50px
             text-align center
             color #1dd388
-            border-bottom 1px solid #eee
             background #fff
-        .reply
+        .topic-info-container
             display block
-            .reply-info
-                padding 10px
+            .topic-info
                 display flex
+                padding 10px
                 .avatar
                     flex-basis 64px
-                    clip-path polygon(0 50%, 50% 0, 100% 50%, 50% 100%)
                     overflow hidden
-                    line-height 0
                     margin-right 10px
-                .other-info
-                    flex 1
+                    line-height 0
+                    clip-path polygon(0 50%, 50% 0, 100% 50%, 50% 100%)
+                .topic-main-info
                     display flex
+                    flex 1
                     flex-wrap wrap
                     align-items space-between
                     overflow hidden
-                    div
+                    .topic-style
                         flex-basis 100%
                         line-height 32px
-                        &.title-name
-                            color #333
+                        &.topic-title
                             overflow hidden
+                            color #333
                             white-space nowrap
                             text-overflow ellipsis
                         &.author-time
@@ -254,12 +272,12 @@
                             span
                                 color #666
                                 font-size 14px
-                                &.edit
+                                &.topic-edit
                                     width 32px
                                     a
                                         color inherit
                                         display block
-        .no-data
+        .no-topics-data
             position absolute
             left 50%
             top 80px

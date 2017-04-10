@@ -43,6 +43,11 @@ li{
 a{
     text-decoration: none;
 }
+
+a:active{
+    tap-highlight-color:rgba(0, 0, 0, 0);
+}
+
 a img {
     border: 0;
 }
@@ -63,3 +68,5 @@ select {
     appearance: none;
     background-color: #fff;
 }
+
+tap-highlight-color:rgba(0, 0, 0, 0);

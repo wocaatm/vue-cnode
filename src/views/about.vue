@@ -7,6 +7,9 @@
                 <li>1:利用<a href="https://cnodejs.org/api">Cnode-API</a>来获取webapp的数据</li>
                 <li>2:代码已经提交到<a href="https://github.com/wocaatm/vue-cnode">github</a>上,很感谢能给个star</li>
                 <li>3:webapp利用了<a href="http://cn.vuejs.org/">vue</a>的相关技术构建</li>
+                <li>4:对Css3的一些常用使用场景进行了实现,例如:背景渐变,折角实现,还有悬浮菜单</li>
+                <li>5:需要优化的东西:继续增加css或js的动画效果,对常见的tab切换改为手势操作</li>
+                <li>6:本人QQ:1844209986,一起学习</li>
             </ul>
         </div>
         <na-menu></na-menu>

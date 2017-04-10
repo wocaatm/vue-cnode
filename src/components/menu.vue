@@ -69,7 +69,7 @@
         line-height 40px
         transform translate3d(0,0,0)
         transition transform ease-out 200ms
-        z-index 99
+        z-index 9
     #menu 
         position fixed
         width 40px

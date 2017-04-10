@@ -21,6 +21,13 @@
                 return this.$store.state.userInfo
             }
         },
+        created () {
+            if (this.userInfo.userId) {
+                this.$router.push({
+                    path: '/'
+                })
+            }
+        },
         methods: {
             login () {
                 if (this.accesstoken.trim() === '') {
@@ -38,9 +45,10 @@
                     window.localStorage.user = JSON.stringify(user)
                     this.$store.commit('login', user)
                     this.$alert('登录成功', 500)
+                    let redirect = decodeURIComponent(this.$route.query.redirect || '/')
                     setTimeout(() => {
                         this.$router.push({
-                            path: '/'
+                            path: redirect
                         })
                     }, 500)
                 }).catch(error => {
@@ -52,13 +60,6 @@
         },
         components: {
             naHead
-        },
-        created () {
-            if (this.userInfo.userId) {
-                this.$router.push({
-                    path: '/'
-                })
-            }
         }
     }
 </script>

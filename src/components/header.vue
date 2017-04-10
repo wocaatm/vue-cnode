@@ -1,16 +1,14 @@
 <template>
-    <div>
-        <header>
-            <span class="title fl">{{ title }}</span>
-            <div class="opration fl">
-                <div class="icon">
-                    <span v-if='userInfo.loginname' @click='showMore = !showMore'>
-                        <i class="fa fa-list-ul fa-lg"></i>
-                    </span>
-                    <span v-else class="login">
-                        <router-link to='/login'><i class="fa fa-user-circle-o fa-lg"></i></router-link>
-                    </span>
-                </div>
+    <header>
+        <span class="title fl">{{ title }}</span>
+        <div class="opration fl" @click='showMore = !showMore'>
+            <div class="icon">
+                <span v-if='userInfo.loginname'>
+                    <i class="fa fa-list-ul fa-lg"></i>
+                </span>
+                <span v-else class="login">
+                    <router-link to='/login'><i class="fa fa-user-circle-o fa-lg"></i></router-link>
+            </span>
             </div>
             <div class="opration-tab" v-if='showMore'>
                 <ul>
@@ -18,8 +16,8 @@
                     <li class='tab-item'><router-link :to="`/message/${userInfo.token}`" class='item-content'><i class="fa fa-commenting-o fa-lg"></i>消息<span v-if='messageCount' class="count">{{messageCount}}</span></router-link></li>
                 </ul>
             </div>
-        </header>
-    </div>
+        </div>
+    </header>
 </template>
 
 <script>
@@ -43,6 +41,11 @@
         },
         mounted () {
             if (this.userInfo.token) {
+                this.getCount()
+            }
+        },
+        methods: {
+            getCount () {
                 let url = 'https://cnodejs.org/api/v1/message/count'
                 this.$http.get(url, {params: {accesstoken: this.userInfo.token}}).then(res => {
                     if (res.body.success && res.body.data) {
@@ -50,13 +53,18 @@
                     }
                 })
             }
+        },
+        watch: {
+            '$route' (to, from) {
+                this.getCount()
+            }
         }
     }
 </script>
 
 <style lang='stylus'>
     header-height = 45px
-    .titleOverflow
+    .title-overflow
         overflow hidden
         text-overflow ellipsis
         white-space nowrap
@@ -66,7 +74,7 @@
         left 0
         width 100%
         line-height header-height
-        background rgba(255,255,255,.95)
+        background rgb(255,255,255)
         border-bottom 1px solid #e8e8e8
         box-shadow: 0 0 4px rgba(0, 0, 0, 0.25)
         z-index 10
@@ -86,7 +94,7 @@
             padding-left 45px
             text-align center
             font-size 16px
-            @extend .titleOverflow
+            @extend .title-overflow
         .opration-tab
             position absolute
             border-radius 5px
@@ -99,6 +107,7 @@
                 &:last-child
                     border none
                 .item-content
+                    text-align left
                     padding 10px 20px
                     display block
                     color #fff

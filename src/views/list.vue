@@ -1,22 +1,22 @@
 <template>
-    <div id="index">
-        <na-head :title='getTitleStr(searchKey.tab)'></na-head>
-        <section class="listContainer">
-            <ul>
-                <li class="flexible" v-for="item in items">
+    <div id="list">
+        <na-head :title='getTitleStr(searchInfo.tab)'></na-head>
+        <section class="list-container">
+            <ul class='list-ul'>
+                <li class="list-li" v-for="item in items">
                     <router-link :to="{name:'detail',params:{id:item.id}}">
                         <div class="item item-top">
                             <span class="tab" :class="item.tab | getTabInfo(item.top, item.good, true)">{{item.tab | getTabInfo(item.top, item.good, false)}}</span>
                             <span class="title">{{item.title}}</span>
                         </div>
                         <div class="item item-bottom">
-                            <img :src="item.author.avatar_url" alt="">
+                            <img :src="item.author.avatar_url" alt="" onerror="this.src='../assets/img/default.png'">
                             <div class="info">
-                                <div class="user-info common-info">
+                                <div class="base-info info-style">
                                     <span class="username">{{item.author.loginname}}</span>
                                     <span class="createtime"><i class="fa fa-clock-o"></i>{{item.create_at | getTime}}</span>
                                 </div>
-                                <div class="other-info common-info">
+                                <div class="other-info info-style">
                                     <span><i class="fa fa-comment-o"></i>{{item.reply_count}}</span>
                                     <span><i class="fa fa-eye"></i>{{item.visit_count}}</span>
                                 </div>
@@ -25,12 +25,12 @@
                     </router-link>
                 </li>
             </ul>
-            <div class="loader-container" v-if='scrollLoader'>
+            <div class="load-more-container" v-if='loadMoreFlag'>
                 <i class="fa fa-refresh fa-spin fa-2x"></i>
             </div>
         </section>
         <na-menu></na-menu>
-        <na-back-to-top v-if='showBackTop' @scrollState='changeState'></na-back-to-top>
+        <na-back-to-top v-if='scrollY > 200' @scrollToTop='scrollY = 0'></na-back-to-top>
     </div>
 </template>
 
@@ -43,33 +43,23 @@
         data () {
             return {
                 items: [],
-                searchKey: {
+                searchInfo: {
                     page: 1,
                     limit: 20,
                     tab: 'all',
                     mdrender: true
                 },
-                isScrolling: false,
                 scrollY: 0,
-                scrollLoader: false
-            }
-        },
-        computed: {
-            showBackTop () {
-                if (this.scrollY > 200 || this.isScrolling) {
-                    return true
-                } else {
-                    return false
-                }
+                loadMoreFlag: false
             }
         },
         mounted () {
             if (this.$route.query && this.$route.query.tab) {
-                this.searchKey.tab = this.$route.query.tab
+                this.searchInfo.tab = this.$route.query.tab
             }
-            if (window.window.sessionStorage.searchKey && window.window.sessionStorage.tab === this.searchKey.tab) {
+            if (window.window.sessionStorage.searchInfo && window.window.sessionStorage.tab === this.searchInfo.tab) {
                 this.items = JSON.parse(window.window.sessionStorage.items)
-                this.searchKey = JSON.parse(window.window.sessionStorage.searchKey)
+                this.searchInfo = JSON.parse(window.window.sessionStorage.searchInfo)
                 this.$nextTick(() => window.scrollTo(0, window.window.sessionStorage.scrollTop))
             } else {
                 this.getTopics()
@@ -80,7 +70,7 @@
             if (from.name !== 'detail') {
                 if (window.sessionStorage.tab) {
                     window.sessionStorage.removeItem('items')
-                    window.sessionStorage.removeItem('searchKey')
+                    window.sessionStorage.removeItem('searchInfo')
                     window.sessionStorage.removeItem('tab')
                 }
             }
@@ -90,7 +80,7 @@
             if (to.name === 'detail') {
                 window.sessionStorage.scrollTop = this.scrollY
                 window.sessionStorage.items = JSON.stringify(this.items)
-                window.sessionStorage.searchKey = JSON.stringify(this.searchKey)
+                window.sessionStorage.searchInfo = JSON.stringify(this.searchInfo)
                 window.sessionStorage.tab = from.query.tab || 'all'
             }
             next()
@@ -118,34 +108,31 @@
                 return str
             },
             getTopics () {
-                this.$http.get('https://cnodejs.org/api/v1/topics', {params: this.searchKey}).then(res => {
+                this.$http.get('https://cnodejs.org/api/v1/topics', {params: this.searchInfo}).then(res => {
                     res.body.data.forEach((v, i) => {
                         this.items.push(v)
                     })
-                    this.scrollLoader = false
+                    this.loadMoreFlag = false
                 })
             },
             scroll () {
                 this.scrollY = window.pageYOffset || window.scrollTop || document.documentElement.scrollTop || document.body.scrollTop
                 let section = document.getElementsByTagName('section')[0]
                 if (!section) return
-                if ((this.scrollY + window.innerHeight === section.clientHeight) && !this.scrollLoader) {
-                    this.scrollLoader = true
-                    this.searchKey.page++
+                if ((this.scrollY + window.innerHeight === section.clientHeight) && !this.loadMoreFlag) {
+                    this.loadMoreFlag = true
+                    this.searchInfo.page++
                     this.getTopics()
                 }
-            },
-            changeState (arg) {
-                this.isScrolling = arg[0]
             }
         },
         watch: {
             '$route' (to, from) {
                 if (to.query && to.query.tab) {
-                    this.searchKey.tab = to.query.tab
+                    this.searchInfo.tab = to.query.tab
                     this.items = []
                 }
-                this.searchKey.page = 1
+                this.searchInfo.page = 1
                 this.getTopics()
             }
         },
@@ -158,77 +145,96 @@
 </script>
 
 <style lang='stylus'>
-    .listContainer
+    li-padding = 30px  /*list-li padding*/
+    .list-container
         padding-top 46px
-        .flexible
-            display flex
-            flex-wrap wrap
-            justify-content left
-            border-bottom 1px solid #d5dbdb
-            padding 10px
-            a
-                width 100%
-            .item
-                flex-basis 100%
+        .list-ul
+            padding li-padding 30px 0
+            &:before
+                position fixed
+                z-index -1
+                top 0
+                bottom 0
+                left 0
+                right 0
+                content ''
+                background #38404e
+                background-image linear-gradient(rgba(255,255,255,0.2) 1px, transparent 0),linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 0)
+                background-size 60px 60px
+            .list-li
                 display flex
-                align-items center
-                &.item-top
-                    max-width 100%
-                    font-size 16px
-                    padding 5px 0px
-                    .tab
-                        width 40px
-                        background #e74c3c
-                        border-radius 4px
-                        color #fff
-                        padding: 5px 0;
-                        margin-right 15px
-                        font-size 10px
-                        font-weight 400
-                        text-align center
-                        &.good
-                            background #83d983
-                        &.share
-                            background #83d983
-                        &.ask
-                            background #f6bf19
-                        &.job
-                            background #8162d0
-                        &.no-type
-                            background #ccc
-                    .title
-                        flex 1
-                        color #2c3e50
-                        font-weight blod
-                        overflow hidden
-                        white-space nowrap
-                        text-overflow ellipsis
-                &.item-bottom
-                    color #34495e
-                    img
-                        width 40px
-                        height 40px
-                        margin-right 10px
-                        border-radius 50%
-                    i
-                        margin-right 6px
-                    .info
-                        flex 1
-                        display flex
-                        flex-wrap wrap
-                        .common-info
-                            flex-basis 100%
+                flex-wrap wrap
+                justify-content left
+                padding 20px 10px
+                margin-top li-padding
+                border-radius 0.5em
+                background #465162
+                box-shadow: 10px 10px 0 0 #272d37
+                &:nth-child(1)
+                    margin-top 0
+                a
+                    width 100%
+                .item
+                    display flex
+                    flex-basis 100%
+                    align-items center
+                    &.item-top
+                        max-width 100%
+                        padding 5px 0px
+                        margin-bottom 10px
+                        font-size 16px
+                        .tab
+                            width 40px
+                            padding: 5px 0;
+                            margin-right 15px
+                            border-radius 4px
+                            color #fff
+                            font-size 10px
+                            font-weight 400
+                            text-align center
+                            background #e74c3c
+                            &.good
+                                background #83d983
+                            &.share
+                                background #83d983
+                            &.ask
+                                background #f6bf19
+                            &.job
+                                background #8162d0
+                            &.no-type
+                                background #ccc
+                        .title
+                            flex 1
+                            overflow hidden
+                            color #fff
+                            font-weight bold
+                            white-space nowrap
+                            text-overflow ellipsis
+                    &.item-bottom
+                        color #cfd4db
+                        img
+                            width 40px
+                            height 40px
+                            margin-right 10px
+                            border-radius 50%
+                        i
+                            margin-right 6px
+                        .info
                             display flex
-                            &.user-info
+                            flex 1
+                            flex-wrap wrap
+                            .info-style
+                                display flex
+                                flex-basis 100%
                                 justify-content space-between
-                                .createtime
+                                &.base-info .createtime
                                     margin-right 10px
-                            &.other-info
-                                margin-top 4px
-                                span
-                                    margin-right 20px
-        .loader-container
+                                &.other-info
+                                    margin-top 4px
+                                    span
+                                        margin-right 20px
+        .load-more-container
             padding 10px 0
-            text-align center
-            color #333
+            color #fff
+            text-align center        
 </style>
