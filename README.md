@@ -5,15 +5,16 @@
 ## Build Setup
 
 ``` bash
-# install dependencies
+# 下载项目
+git clone https://github.com/wocaatm/vue-cnode.git
+
+# 安装依赖
 npm install
 
-# serve with hot reload at localhost:8080
+# 开发环境启动
 npm run dev
 
-# build for production with minification
+# 生产环境打包
 npm run build
 
-# build for production and view the bundle analyzer report
-npm run build --report
-```
+# 本人qq 1844209986 欢迎一起学习
